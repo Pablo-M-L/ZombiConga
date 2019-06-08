@@ -19,16 +19,17 @@ class GameViewController: UIViewController {
             // Load the SKScene from 'GameScene.sks'
             if let scene = SKScene(fileNamed: "GameScene") {
                 // Set the scale mode to scale to fit the window
-                scene.scaleMode = .aspectFill
-                
+                //scene.scaleMode = .aspectFill
+                //ordena en z el orden de los nodos hay que ponerlo a false y configurar los zposition por codigo.
+                //si se deja en true, puede que cada vez salga en un orden distinto.
+                view.ignoresSiblingOrder = false
+                view.showsFPS = true
+                view.showsNodeCount = true
                 // Present the scene
                 view.presentScene(scene)
             }
             
-            view.ignoresSiblingOrder = true
-            
-            view.showsFPS = true
-            view.showsNodeCount = true
+
         }
     }
 

@@ -11,32 +11,65 @@ import GameplayKit
 
 class GameScene: SKScene {
     
-    private var label : SKLabelNode?
-    private var spinnyNode : SKShapeNode?
+    var zombie1 = SKSpriteNode()
+    let fondoImage = SKTexture(imageNamed: "background1")
+    let imagenZombie = SKTexture(imageNamed: "zombie1")
+    var i: CGFloat = 10.0
     
+
+    
+    // se ejecuta cuando se crea la vista.
     override func didMove(to view: SKView) {
         
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
-        }
-        
-        // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
-        
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
+        addFondoPlaya()
+        addZombie()
     }
     
+    func addZombie(){
+        zombie1 = SKSpriteNode(texture: imagenZombie)
+        //definimos el tamaño del zombie con respecto al tamaño de la vista.
+        zombie1.scale(to: CGSize(width: frame.size.width * 0.2, height: frame.size.height * 0.2))
+        zombie1.position = CGPoint(x: -320, y: 100)
+        //los puntos x e y van de 0 a 1
+        //zombie1.anchorPoint = CGPoint(x: 0.9, y: 0.9)
+        //zombie1.zRotation = CGFloat(Double.pi)/2
+        zombie1.zPosition = 0
+        addChild(zombie1)
+    }
+    
+    func girarZombie(){
+        print(i)
+        i -= 0.5
+        if i > -10.0 {
+            zombie1.zRotation = CGFloat(Double.pi)/i
+        }
+        else {
+            i = 10
+            zombie1.zRotation = CGFloat(Double.pi)/i
+        }
+
+    }
+    
+    func addFondoPlaya(){
+        //añadir fondo.
+        let background = SKSpriteNode(texture: fondoImage)
+        //lo escalamos a la misma altura y anchura que la vista principal.
+        background.scale(to: CGSize(width: self.frame.width, height: self.frame.height))
+        background.zPosition = -1
+        addChild(background)
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        //llamado cuando empieza touch. (antes de levantar el dedo)
+    }
+    
+    
+    override func update(_ currentTime: TimeInterval) {
+        // se llama cada frame.
+        //girarZombie()
+    }
+    
+    /*
     
     func touchDown(atPoint pos : CGPoint) {
         if let n = self.spinnyNode?.copy() as! SKShapeNode? {
@@ -61,14 +94,8 @@ class GameScene: SKScene {
             self.addChild(n)
         }
     }
+
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let label = self.label {
-            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
-        }
-        
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
-    }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
@@ -81,9 +108,6 @@ class GameScene: SKScene {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
-    
-    
-    override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-    }
+    */
+
 }
