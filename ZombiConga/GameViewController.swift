@@ -16,8 +16,10 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         
         if let view = self.view as! SKView? {
+            //MainMenuScene(size: CGSize(width: 2048, height: 1536))
             // Load the SKScene from 'GameScene.sks'
-            if let scene = SKScene(fileNamed: "GameScene") {
+            if let scene = SKScene(fileNamed: "MainMenuScene")//SKScene(fileNamed: "GameOverScene")
+                {
                 // Set the scale mode to scale to fit the window
                 //scene.scaleMode = .aspectFill
                 //ordena en z el orden de los nodos hay que ponerlo a false y configurar los zposition por codigo.
@@ -27,8 +29,8 @@ class GameViewController: UIViewController {
                 view.showsNodeCount = true
                 // Present the scene
                 view.presentScene(scene)
-            }
             
+            }
 
         }
     }
