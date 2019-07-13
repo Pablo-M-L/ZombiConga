@@ -23,7 +23,18 @@ class MainMenuScene: SKScene{
         
     }
     
+    #if os(iOS)
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        sceneTouched()
+    }
+    #else
+    override func mouseDown(with event: NSEvent) {
+        sceneTouched()
+    }
+    
+    #endif
+    
+    func sceneTouched(){
         let blockAction = SKAction.run { () -> Void in
             let gameScene = GameScene(size: self.size)
             gameScene.scaleMode = self.scaleMode

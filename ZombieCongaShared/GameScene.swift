@@ -94,16 +94,24 @@ class GameScene: SKScene {
         //HUD
         livesLabel.position = CGPoint(x: frame.minX, y: frame.maxY)
         livesLabel.fontSize = 42
-        livesLabel.fontColor = UIColor.red
         livesLabel.verticalAlignmentMode = .top
         livesLabel.horizontalAlignmentMode = .left
         addChild(livesLabel)
         
         catsLabel.position = CGPoint(x: frame.maxX, y: frame.maxY)
         catsLabel.fontSize = 42
-        catsLabel.fontColor = UIColor.red
         catsLabel.verticalAlignmentMode = .top
         catsLabel.horizontalAlignmentMode = .right
+        
+        #if os(iOS)
+        livesLabel.fontColor = UIColor.red
+        catsLabel.fontColor = UIColor.red
+        
+        #else
+        livesLabel.fontColor = NSColor.red
+        catsLabel.fontColor = NSColor.blue
+        
+        #endif
         addChild(catsLabel)
         
         updateHud()
@@ -405,19 +413,35 @@ class GameScene: SKScene {
         lastTouchLocation = touchLocation
         moveZombieToLocation(location: touchLocation)
     }
-    /*
+    
+    #if os(iOS)
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         //llamado cuando empieza touch. (antes de levantar el dedo)
         let touch = touches.first! as UITouch
         let location = touch.location(in: backgroundLayer)
         sceneTouched(touchLocation: location)
     }
-    */
+ 
+    
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first! as UITouch
         let location = touch.location(in: backgroundLayer)
         sceneTouched(touchLocation: location)
     }
+    
+    #else
+    override func mouseDown(with event: NSEvent) {
+        let touch = event.location(in: backgroundLayer)
+        sceneTouched(touchLocation: touch)
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        let touch = event.location(in: backgroundLayer)
+        sceneTouched(touchLocation: touch)
+    }
+    
+    #endif
     
     //detecta los limites de la pantalla.
     func checkBounds(){
