@@ -27,7 +27,7 @@ class GameScene: SKScene {
     var dt: TimeInterval = 0 //Delta time (diferencia de tiempo) desde la ultima acutalizacion.
     
     let backgroundPixelPerSeconds: CGFloat = 100.0
-    let catPixelPerSeconds: CGFloat = 200.0
+    let catPixelPerSeconds: CGFloat = 220.0
     let zombiePixelPerSecond: CGFloat = 200.0 //movimiento lineal.
     let zombieAnglePerSecond: CGFloat = 2.5 * π // una vuelta son 2 * π
 
@@ -38,12 +38,28 @@ class GameScene: SKScene {
     let catSound = SKAction.playSoundFileNamed("hitCat", waitForCompletion: false)
     let enemySound = SKAction.playSoundFileNamed("hitCatLady", waitForCompletion: false)
     
-    var zombieLifes = 30
+    var zombieLifes = 50
     var isGameOver = false
     var congaCount = 0
+    let objective = 25
     
+    let backgroundLayer = SKNode()
     
+    let livesLabel: SKLabelNode
+    let catsLabel: SKLabelNode
+    
+    override init(size: CGSize) {
+        livesLabel = SKLabelNode(fontNamed: "Copperplate")
+        catsLabel = SKLabelNode(fontNamed: "Copperplate")
+        
+        
+        super.init(size: size)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init code no ha sido implementado")
 
+    }
     
     // se ejecuta cuando se crea la vista.
     override func didMove(to view: SKView) {
@@ -56,24 +72,41 @@ class GameScene: SKScene {
         zombieTextures.append(zombieTextures[1])
         
         zombieAnimation = SKAction.repeatForever(SKAction.animate(with: zombieTextures, timePerFrame: 0.15))
-        
+        backgroundLayer.zPosition = -2
+        addChild(backgroundLayer)
         
         addFondoPlaya()
         addZombie()
         //spawnEnemy()
         //saca enemigos aleatoriamente, de forma continua y esperando 3 segundos.
         run(SKAction.repeatForever(
-            SKAction.sequence( [SKAction.run(spawnEnemy), SKAction.wait(forDuration: 3)] )
+            SKAction.sequence( [SKAction.run(spawnEnemy), SKAction.wait(forDuration: 2.0)] )
             )
         )
 
         run(SKAction.repeatForever(
-            SKAction.sequence( [SKAction.run(spawnCat), SKAction.wait(forDuration: 2)] )
+            SKAction.sequence( [SKAction.run(spawnCat), SKAction.wait(forDuration: 1.5)] )
             )
         )
         
         playBackgroundMusic(fileName: "backgroundMusic.mp3")
         
+        //HUD
+        livesLabel.position = CGPoint(x: frame.minX, y: frame.maxY)
+        livesLabel.fontSize = 42
+        livesLabel.fontColor = UIColor.red
+        livesLabel.verticalAlignmentMode = .top
+        livesLabel.horizontalAlignmentMode = .left
+        addChild(livesLabel)
+        
+        catsLabel.position = CGPoint(x: frame.maxX, y: frame.maxY)
+        catsLabel.fontSize = 42
+        catsLabel.fontColor = UIColor.red
+        catsLabel.verticalAlignmentMode = .top
+        catsLabel.horizontalAlignmentMode = .right
+        addChild(catsLabel)
+        
+        updateHud()
         
     }
     
@@ -81,14 +114,19 @@ class GameScene: SKScene {
         zombie1 = SKSpriteNode(texture: imagenZombie)
         zombie1.name = "zombie"
         //definimos el tamaño del zombie con respecto al tamaño de la vista.
-        zombie1.scale(to: CGSize(width: frame.size.width * 0.2, height: frame.size.height * 0.2))
-        zombie1.position = CGPoint(x: frame.minX, y: frame.midY)
+        zombie1.scale(to: CGSize(width: frame.size.width * 0.12, height: frame.size.height * 0.13))
+        zombie1.position = CGPoint(x: 450 , y: 150)
 
         //los puntos x e y van de 0 a 1
         //zombie1.anchorPoint = CGPoint(x: 0.9, y: 0.9)
         //zombie1.zRotation = CGFloat(Double.pi)/2
         zombie1.zPosition = 10
-        addChild(zombie1)
+        backgroundLayer.addChild(zombie1)
+    }
+    
+    func updateHud(){
+        livesLabel.text = "Vidas: \(zombieLifes)"
+        catsLabel.text = "Objetivo: \(congaCount) // \(objective)"
     }
     
     func animatedZombie(){
@@ -118,7 +156,7 @@ class GameScene: SKScene {
         //colision con gatos
         var hitCats: [SKSpriteNode] = []
         
-        enumerateChildNodes(withName: "gato") { node, _  in
+        backgroundLayer.enumerateChildNodes(withName: "gato") { node, _  in
             let cat = node as! SKSpriteNode
             if cat.intersects(self.zombie1){
                 hitCats.append(cat)
@@ -134,7 +172,7 @@ class GameScene: SKScene {
         //colision con enemigo
         var hitEnemys: [SKSpriteNode] = []
         
-        enumerateChildNodes(withName: "enemy") { node, _  in
+        backgroundLayer.enumerateChildNodes(withName: "enemy") { node, _  in
             let enemy = node as! SKSpriteNode
             if enemy.intersects(self.zombie1){
                 hitEnemys.append(enemy)
@@ -149,9 +187,12 @@ class GameScene: SKScene {
     func zombieHitsCat(cat: SKSpriteNode){
         run(catSound)
         congaCount += 1
+        updateHud()
+        
         cat.name = "conga"
         cat.removeAllActions()
         cat.zRotation = 0
+        cat.setScale(0.2)
         let greenCat = SKAction.colorize(with: SKColor.green, colorBlendFactor: 1.0, duration: 0.5)
         cat.run(greenCat)
 
@@ -168,6 +209,7 @@ class GameScene: SKScene {
         }
         
         zombieLifes -= 1
+        updateHud()
         isInvincible = true
         let blinkTimes = 12.0 //parpadeos
         let blinkDuration = 4.0
@@ -226,20 +268,22 @@ class GameScene: SKScene {
         background.zPosition = -1
         background.name = "background"
 
-        addChild(background)
+        backgroundLayer.addChild(background)
             
         }
     }
 
     func moveBackground(){
-        enumerateChildNodes(withName: "background") { (node, _) in
+        let velocity = CGPoint(x: -self.backgroundPixelPerSeconds, y: 0.0)
+        let amountToMove = velocity * CGFloat(self.dt)
+        backgroundLayer.position += amountToMove
+        
+        backgroundLayer.enumerateChildNodes(withName: "background") { (node, _) in
             let background = node as! SKSpriteNode
-            let velocity = CGPoint(x: -self.backgroundPixelPerSeconds, y: 0.0)
-            let amountToMove = velocity * CGFloat(self.dt)
-            background.position += amountToMove
             
+            let backgroundLayerPosition = self.backgroundLayer.convert(background.position, to: self)
             //cuando el background1 sale de la pantalla lo pasa detras del bacground2
-            if background.position.x <= -background.size.width{
+            if backgroundLayerPosition.x <= -background.size.width{
                 background.position = CGPoint(x: background.position.x + 2.0 * background.size.width, y: 0.0)
             }
         }
@@ -263,8 +307,9 @@ class GameScene: SKScene {
         //moveSprite(sprite: zombie1, velocity: velocity)
         checkBounds()
         //rotateSprite(sprite: zombie1, direction: velocity)
-        //si la posicion del zombie menos dende debe moverse, es menor que lo que tiene que moverse el zombie
-        //en ese intervalo de tiempo, pasamos la velocidad a 0.
+        //si la posicion del zombie menos donde debe moverse, es menor que lo que tiene que moverse el zombie
+        //en ese intervalo de tiempo, pasamos la velocidad a 0 para que pare.
+        
         if (zombie1.position - lastTouchLocation).lenght() < zombiePixelPerSecond * CGFloat(dt){
             velocity = CGPoint.zero
             stopZombie()
@@ -275,8 +320,11 @@ class GameScene: SKScene {
                 rotateSprite(sprite: zombie1, direction: velocity)
             }
         }
+ 
         
-        
+        //moveSprite(sprite: zombie1, velocity: velocity)
+        //rotateSprite(sprite: zombie1, direction: velocity)
+            
         moveConga()
         moveBackground()
         
@@ -290,7 +338,7 @@ class GameScene: SKScene {
             view?.presentScene(gameOverScene, transition: transition)
         }
         
-        if congaCount >= 5 {
+        if congaCount >= objective && !isGameOver{
             bacgroundAudioPlayer.stop()
             isGameOver = true
             let gameOverScene = GameOverScene(size: size, hasWon: true)
@@ -346,43 +394,56 @@ class GameScene: SKScene {
         lastTouchLocation = touchLocation
         moveZombieToLocation(location: touchLocation)
     }
-    
+    /*
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         //llamado cuando empieza touch. (antes de levantar el dedo)
         let touch = touches.first! as UITouch
-        let location = touch.location(in: self)
+        let location = touch.location(in: backgroundLayer)
         sceneTouched(touchLocation: location)
     }
-    
+    */
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first! as UITouch
-        let location = touch.location(in: self)
+        let location = touch.location(in: backgroundLayer)
         sceneTouched(touchLocation: location)
     }
     
     //detecta los limites de la pantalla.
     func checkBounds(){
+        //coordenadas de pantalla
+        /*
         let boundLetf = frame.minX + zombie1.size.width/2.5
         let boundRight = frame.maxX - zombie1.size.width/2.5
         let boundTop = frame.minY + zombie1.size.height/2
         let boundBottom = frame.maxY - zombie1.size.height/2
+        */
+        //coordenadas de capa fondo
+        
+        let boundLetfFrame = CGPoint(x: frame.minX + zombie1.size.width/2.5, y: 0.0)
+        let boundRightFrame = CGPoint(x: frame.maxX - zombie1.size.width/2.5, y: 0.0)
+        let boundTopFrame = CGPoint(x: 0.0, y: frame.minY + zombie1.size.height/2)
+        let boundBottomFrame = CGPoint(x: 0.0, y: frame.maxY - zombie1.size.height/2)
+        let boundLetf = backgroundLayer.convert(boundLetfFrame, from: self)
+        let boundRight = backgroundLayer.convert(boundRightFrame, from: self)
+        let boundTop = backgroundLayer.convert(boundTopFrame, from: self)
+        let boundBottom = backgroundLayer.convert(boundBottomFrame, from: self)
+ 
 
-
-        if zombie1.position.x <= boundLetf{
-            zombie1.position.x = boundLetf
+        if zombie1.position.x <= boundLetf.x{
+            zombie1.position.x = boundLetf.x
             velocity.x = -velocity.x
         }
-        if zombie1.position.x >= boundRight{
+        if zombie1.position.x >= boundRight.x{
 
-            zombie1.position.x = boundRight
+            zombie1.position.x = boundRight.x
             velocity.x = -velocity.x
         }
-        if zombie1.position.y <= boundTop{
-            zombie1.position.y = boundTop
+        if zombie1.position.y <= boundTop.y{
+            zombie1.position.y = boundTop.y
             velocity.y = -velocity.y
         }
-        if zombie1.position.y >= boundBottom{
-            zombie1.position.y = boundBottom
+        if zombie1.position.y >= boundBottom.y{
+            zombie1.position.y = boundBottom.y
             velocity.y = -velocity.y
         }
 
@@ -400,17 +461,32 @@ class GameScene: SKScene {
     func spawnEnemy(){
         let enemy = SKSpriteNode(texture: imagenEnemigo)
         enemy.name = "enemy"
-        enemy.scale(to: CGSize(width: frame.size.width * 0.2, height: frame.size.height * 0.2))
-        let posAleatoriaY = CGFloat.random(min: frame.minY + enemy.size.height/2, max: frame.maxY - enemy.size.height/2)
+        enemy.scale(to: CGSize(width: frame.size.width * 0.12, height: frame.size.height * 0.12))
+        //con referencia a coordenadas frame
+        //let posAleatoriaY = CGFloat.random(min: frame.minY + enemy.size.height/2, max: frame.maxY - enemy.size.height/2)
+        
+        //con referencia a coordenadas bacgroungLayer
+        
+        let posicionMinimaEnElFrame = CGPoint(x: frame.minX + enemy.size.height/2, y: frame.minY + enemy.size.height/2)
+        let posicionMaximaEnElFrame = CGPoint(x: frame.maxX - enemy.size.height/2, y: frame.maxY - enemy.size.height/2)
+        let posicionMinimaConvertida = self.backgroundLayer.convert(posicionMinimaEnElFrame, from: self)
+        let posicionMaximaConvertida = self.backgroundLayer.convert(posicionMaximaEnElFrame, from: self)
+        
+        let posAleatoriaY = CGFloat.random(min: posicionMinimaConvertida.y, max: posicionMaximaConvertida.y)
 
-        enemy.position = CGPoint(x: frame.maxX + enemy.size.width, y: posAleatoriaY)
-
+        enemy.position = CGPoint(x: posicionMaximaConvertida.x + enemy.size.width, y: posAleatoriaY)
+        //enemy.position = CGPoint(x: frame.maxX + enemy.size.width, y: posAleatoriaY)
+        
         //enemy.position = CGPoint.zero
         enemy.zPosition = 0
-        addChild(enemy)
+        backgroundLayer.addChild(enemy)
         
     //movimiento lineal
-        let actionTranslation = SKAction.move(to: CGPoint(x: (size.width/2 + enemy.size.width/2) * -1, y: enemy.position.y), duration: 4.0)
+       // let actionTranslation = SKAction.move(to: CGPoint(x: (size.width/2 + enemy.size.width/2) * -1, y: enemy.position.y), duration: 10.0)
+       //con referencia a coordenadas bacgroungLayer
+        let posicionFinalXconvertida = self.backgroundLayer.convert(CGPoint(x: (size.width/2 + enemy.size.width/2) * -1, y: 0.0), from: self)
+        let actionTranslation = SKAction.move(to: CGPoint(x: posicionFinalXconvertida.x, y: enemy.position.y), duration: 7.0)
+        
         let actionRemove = SKAction.removeFromParent()
         enemy.run(SKAction.sequence([actionTranslation, actionRemove]))
         
@@ -450,18 +526,28 @@ class GameScene: SKScene {
     func spawnCat(){
         let gato = SKSpriteNode(texture: imagenGato)
         gato.name = "gato"
-        let posAleatoriaY = CGFloat.random(min: frame.minY + gato.size.height/2, max: frame.maxY - gato.size.height/2)
-        let posAleatoriaX = CGFloat.random(min: frame.minX + gato.size.width/2, max: frame.maxX - gato.size.width/2)
         
+        //con referencia a coordenadas frame
+        //let posAleatoriaY = CGFloat.random(min: frame.minY + gato.size.height/2, max: frame.maxY - gato.size.height/2)
+        //let posAleatoriaX = CGFloat.random(min: frame.minX + gato.size.width/2, max: frame.maxX - gato.size.width/2)
+        
+        //con referencia a coordenadas bacgroungLayer
+        let posicionMinimaEnElFrame = CGPoint(x: frame.minX + gato.size.height/2, y: frame.minY + gato.size.height/2)
+        let posicionMaximaEnElFrame = CGPoint(x: frame.maxX - gato.size.height/2, y: frame.maxY - gato.size.height/2)
+        let posicionMinimaConvertida = self.backgroundLayer.convert(posicionMinimaEnElFrame, from: self)
+        let posicionMaximaConvertida = self.backgroundLayer.convert(posicionMaximaEnElFrame, from: self)
 
+        let posAleatoriaY = CGFloat.random(min: posicionMinimaConvertida.y, max: posicionMaximaConvertida.y)
+        let posAleatoriaX = CGFloat.random(min: posicionMinimaConvertida.x, max: posicionMaximaConvertida.x)
+        
         gato.position = CGPoint(x: posAleatoriaX, y: posAleatoriaY)
         gato.zPosition = 0
         //desaparece el gato escalandolo
         gato.scale(to: CGSize(width: 0 , height: 0 ))
-        addChild(gato)
+        backgroundLayer.addChild(gato)
         
         //secuencia de acciones que hace que el gato aparezca durante 8 segundos y desaparezca.
-        let appear = SKAction.scale(to: CGSize(width: frame.size.width * 0.09 , height: frame.size.height * 0.09 ), duration: 1)
+        let appear = SKAction.scale(to: CGSize(width: frame.size.width * 0.07 , height: frame.size.height * 0.07 ), duration: 1)
         
         //rotacion gato durante el tiempo en pantalla -------------------------------------------------
         //let wait = SKAction.wait(forDuration: 8.0)
@@ -496,20 +582,28 @@ class GameScene: SKScene {
     
     func moveConga(){
         var congaPosition = zombie1.position
-        enumerateChildNodes(withName: "conga") { node, _ in
+        
+        backgroundLayer.enumerateChildNodes(withName: "conga") { node, _ in
             if !node.hasActions(){
                 let actionDuration = 0.2
-                let offset = congaPosition - node.position
+                let offset = congaPosition - node.position //calcula cuanto se desplaza
                 let director = offset.normalize()
                 
                 let amountToMovePerSecond = director * self.catPixelPerSeconds
                 let totalAmountToMove = amountToMovePerSecond * CGFloat(actionDuration)
                 
                 let actionMove = SKAction.moveBy(x:totalAmountToMove.x, y: totalAmountToMove.y, duration: actionDuration)
-                node.run(actionMove)
                 
+                //rotacion
+                let actionRotate = SKAction.rotate(byAngle: offset.angle - node.zRotation, duration: actionDuration)
+                
+                
+                node.run(SKAction.group([actionMove, actionRotate]))
+
             }
             congaPosition = node.position
+            
+            
             
         }
         
@@ -517,7 +611,7 @@ class GameScene: SKScene {
     
     func loseCats(){
         var lostCastCount = 0
-        enumerateChildNodes(withName: "conga") { node, stop in
+        backgroundLayer.enumerateChildNodes(withName: "conga") { node, stop in
             var randomCatPosition = node.position
             randomCatPosition.x += CGFloat.random(min: -150.0, max: 150.0)
             randomCatPosition.y += CGFloat.random(min: -50.0, max: 50.0)
