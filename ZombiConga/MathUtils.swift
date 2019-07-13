@@ -67,7 +67,7 @@ func /= ( point: inout CGPoint, scalar: CGFloat){
 //en 32bits no existe los CGFloat.
 #if !(arch(x86_64) || arch(arm64))
 
-    func atan2(y: CGFloat, x: CGFloat){
+    func atan2(y: CGFloat, x: CGFloat)-> CGFloat{
         return CGFloat(atan2f(Float(y), Float(x)))
     }
 
@@ -114,6 +114,18 @@ func shortesAngleBetween(angle1:CGFloat, angle2:CGFloat) ->CGFloat{
     return angle
     
 }
+
+//calcular distancia entre dod cgpoint.
+func distanceBetweenPoints(p1: CGPoint ,p2: CGPoint)-> CGFloat {
+    //vector de la distancia entre los dos puntos que corresponden al centro de dos nodos.
+    let distanceVector = p1 - p2
+    //obtenemos la longitud del vector.
+    let distance = distanceVector.lenght()
+    
+    return distance
+    
+    }
+
 
 //extension que devuelve el signo del Float.
 extension CGFloat{

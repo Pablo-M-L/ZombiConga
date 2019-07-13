@@ -85,7 +85,7 @@ class GameScene: SKScene {
         )
 
         run(SKAction.repeatForever(
-            SKAction.sequence( [SKAction.run(spawnCat), SKAction.wait(forDuration: 1.5)] )
+            SKAction.sequence( [SKAction.run(spawnCat), SKAction.wait(forDuration: 1)] )
             )
         )
         
@@ -158,7 +158,12 @@ class GameScene: SKScene {
         
         backgroundLayer.enumerateChildNodes(withName: "gato") { node, _  in
             let cat = node as! SKSpriteNode
-            if cat.intersects(self.zombie1){
+            
+            let distance = distanceBetweenPoints(p1: self.zombie1.position, p2: cat.position)
+            let zombieSize = min(self.zombie1.frame.size.width, self.zombie1.frame.size.height)/2.0 //se divide para obtener el radio.
+            let catSize = min(cat.frame.size.width, cat.frame.size.height)/2.0
+            //if cat.intersects(self.zombie1){ //se usaba para detectar choque tomando de referencia el bounde del nodo.
+            if distance < zombieSize + catSize{
                 hitCats.append(cat)
             }
         }
@@ -174,7 +179,13 @@ class GameScene: SKScene {
         
         backgroundLayer.enumerateChildNodes(withName: "enemy") { node, _  in
             let enemy = node as! SKSpriteNode
-            if enemy.intersects(self.zombie1){
+            
+            let distance = distanceBetweenPoints(p1: self.zombie1.position, p2: enemy.position)
+            let zombieSize = min(self.zombie1.frame.size.width, self.zombie1.frame.size.height)/2.0 //se divide para obtener el radio.
+            let enemySize = min(enemy.frame.size.width, enemy.frame.size.height)/2.0
+
+            if distance < zombieSize + enemySize{
+            //if enemy.intersects(self.zombie1){ //se usaba para detectar choque tomando de referencia el bounde del nodo.
                 hitEnemys.append(enemy)
             }
         }
